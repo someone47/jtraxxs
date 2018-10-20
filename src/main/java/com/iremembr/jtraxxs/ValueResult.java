@@ -106,8 +106,9 @@ public abstract class ValueResult<V, E> extends Result<E> {
      * @param <E>     closure of all failure types of the given {@code ValueResult}s
      * @return a {@code ValueResult} of an unmodifiable {@link Collection} of success or failure values
      */
-    public static <V, E> ValueResult<Collection<V>, Collection<E>>
-    sequence(Iterable<? extends ValueResult<? extends V, ? extends E>> results) {
+    public static <V, E> ValueResult<Collection<V>, Collection<E>> sequence(
+            Iterable<? extends ValueResult<? extends V, ? extends E>> results
+    ) {
         requireNonNull(results, "results must not be null");
         List<V> values = new ArrayList<>();
         List<E> errors = new ArrayList<>();
@@ -236,6 +237,7 @@ public abstract class ValueResult<V, E> extends Result<E> {
      * Maps the ValueResult to a ValueResult with another value, if the ValueResult is successful.
      *
      * @param mapper A function that returns the new value.
+     * @param <W>    The type of result value of the mapper function.
      * @return The ValueResult of the function's value or a failed ValueResult.
      * @throws IllegalStateException if the ValueResult is successful ensure does not have a value.
      * @throws NullPointerException  if the ValueResult is successful, has a value ensure function is {@code null}.
@@ -262,6 +264,7 @@ public abstract class ValueResult<V, E> extends Result<E> {
      * Maps the ValueResult to a ValueResult with another error, if the ValueResult is failed.
      *
      * @param mapper A function that returns the new error.
+     * @param <F>    The type of result value of the mapper function.
      * @return A failed ValueResult with the error returned by the function or a successful ValueResult.
      * @throws NullPointerException if the ValueResult is failed ensure function is {@code null}.
      */
@@ -346,14 +349,15 @@ public abstract class ValueResult<V, E> extends Result<E> {
      * Returns the ValueResult's value if successful, otherwise throw an exception
      * to be created by the provided supplier.
      *
+     * <p>A method reference to the exception constructor with an empty argument list can
+     * be used as the supplier. For example, {@code IllegalStateException::new}.
+     *
      * @param <X>               the type of the exception to be thrown
      * @param exceptionSupplier the supplier which will return the exception to be thrown;
      *                          must no be null
      * @return the value
      * @throws X                    if the ValueResult is failed
      * @throws NullPointerException if the ValueResult is failed ensure {@code exceptionSupplier} is null
-     * @apiNote A method reference to the exception constructor with an empty argument list can
-     * be used as the supplier. For example, {@code IllegalStateException::new}
      */
     public abstract <X extends Throwable> V orElseThrow(Supplier<? extends X> exceptionSupplier) throws X;
 

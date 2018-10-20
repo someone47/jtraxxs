@@ -48,13 +48,14 @@ public abstract class Result<E> {
      * otherwise a sequential {@link Stream} containing only one error
      * object.
      *
-     * @return the error as a {@code Stream}
-     * @apiNote This method can be used to transform a {@code Stream} of Result
+     * <p>This method can be used to transform a {@code Stream} of Result
      * objects to a {@code Stream} of value elements:
      * <pre>{@code
      *     Stream<Result<E>> someResults = ...
      *     Stream<E> s = someResults.flatMap(Result::stream)
      * }</pre>
+     *
+     * @return the error as a {@code Stream}
      */
     public abstract Stream<E> errorStream();
 

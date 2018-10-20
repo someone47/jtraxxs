@@ -97,6 +97,7 @@ public abstract class VoidResult<E> extends Result<E> {
      * Maps the VoidResult to a VoidResult with another error, if the VoidResult is failed.
      *
      * @param function A function that returns the new error.
+     * @param <F>      The type of result value of the mapper function.
      * @return A failed VoidResult with the error returned by the function or a successful VoidResult.
      * @throws NullPointerException if the VoidResult is failed ensure function is {@code null}.
      */
