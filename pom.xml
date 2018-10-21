@@ -10,8 +10,9 @@
     <packaging>jar</packaging>
 
     <name>jtraxxs</name>
-    <description>jtraxxs is a small library to facilitate Railway Oriented
-        Programming in Java</description>
+    <description>jtraxxs is a small library to facilitate
+        Railway Oriented Programming in Java
+    </description>
     <url>https://github.com/someone47/jtraxxs</url>
     <licenses>
         <license>
@@ -23,7 +24,7 @@
         <developer>
             <name>Olaf Prins</name>
             <email>someone47@iremembr.com</email>
-            <organization>someone47</organization>
+            <organization>com.github.someone47</organization>
             <organizationUrl>https://github.com/someone47</organizationUrl>
         </developer>
     </developers>
@@ -106,6 +107,28 @@
                         <goals>
                             <goal>jar</goal>
                         </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-gpg-plugin</artifactId>
+                <version>1.6</version>
+                <executions>
+                    <execution>
+                        <id>sign-artifacts</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>sign</goal>
+                        </goals>
+                        <configuration>
+                            <gpgArguments>
+                                <arg>--pinentry-mode</arg>
+                                <arg>loopback</arg>
+                            </gpgArguments>
+                            <keyname>${gpg.keyname}</keyname>
+                            <passphraseServerId>${gpg.keyname}</passphraseServerId>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
