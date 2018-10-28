@@ -31,7 +31,7 @@
 
     <scm>
         <connection>scm:git:git://github.com/someone47/jtraxxs.git</connection>
-        <developerConnection>scm:git:ssh://github.com:someone47/jtraxxs.git</developerConnection>
+        <developerConnection>scm:git:git://github.com:someone47/jtraxxs.git</developerConnection>
         <url>http://github.com/someone47/jtraxxs/tree/master</url>
     </scm>
 
