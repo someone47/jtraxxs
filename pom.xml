@@ -30,9 +30,9 @@
     </developers>
 
     <scm>
-        <connection>scm:git:https://github.com/someone47/jtraxxs.git</connection>
-        <developerConnection>scm:git:https://github.com/someone47/jtraxxs.git</developerConnection>
-        <url>http://github.com/someone47/jtraxxs/tree/master</url>
+        <url>https://github.com/someone47/jtraxxs/tree/master</url>
+        <connection>scm:git:git://github.com/someone47/jtraxxs.git</connection>
+        <developerConnection>scm:git:git@github.com:someone47/jtraxxs.git</developerConnection>
     </scm>
 
     <distributionManagement>
