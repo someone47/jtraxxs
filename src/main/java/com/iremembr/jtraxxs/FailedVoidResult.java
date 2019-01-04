@@ -39,6 +39,19 @@ final class FailedVoidResult<E> extends VoidResult<E> {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
+    public <F> VoidResult<F> castError(Class<F> clazz) {
+        if (!clazz.isAssignableFrom(error.getClass())) {
+            throw new IllegalArgumentException(String.format(
+                    "Can not cast the error to the given type. The given type is not a superclass of the"
+                            + " type of the error. error type ='%s', given type = '%s', error = '%s'",
+                    error.getClass(), clazz, error
+            ));
+        }
+        return (VoidResult<F>) this;
+    }
+
+    @Override
     public boolean isSuccessful() {
         return false;
     }

@@ -78,6 +78,11 @@ public abstract class ValueResult<V, E> extends Result<E> {
         return value == null ? fail(error) : ok(value);
     }
 
+    @SuppressWarnings("unchecked")
+    public static <V, E, W extends V, F extends E> ValueResult<V, E> upCast(ValueResult<W, F> result) {
+        return (ValueResult<V, E>) result;
+    }
+
     /**
      * Reduces many {@code ValueResult}s into a single {@code ValueResult} by transforming an
      * {@code Iterable<ValueResult<V, E>>} into a {@code ValueResult<Collection<V>>, Collection<E>>}.
@@ -120,6 +125,10 @@ public abstract class ValueResult<V, E> extends Result<E> {
                 ? ok(unmodifiableCollection(values))
                 : fail(unmodifiableCollection(errors));
     }
+
+    public abstract <W> ValueResult<W, E> castValue(Class<W> clazz);
+
+    public abstract <F> ValueResult<V, F> castError(Class<F> clazz);
 
     /**
      * Returns the ValueResult's value.
@@ -219,7 +228,7 @@ public abstract class ValueResult<V, E> extends Result<E> {
      * @return A ValueResult.
      * @throws NullPointerException if the ValueResult is successful ensure supplier is {@code null}.
      */
-    public abstract <W> ValueResult<W, E> take(Supplier<ValueResult<W, E>> supplier);
+    public abstract <W> ValueResult<W, E> take(Supplier<? extends ValueResult<? extends W, ? extends E>> supplier);
 
     /**
      * Returns the current ValueResult when it is failed, otherwise a successful or failed
@@ -369,5 +378,7 @@ public abstract class ValueResult<V, E> extends Result<E> {
      * @throws IllegalStateException if the ValueResult has no value
      */
     public abstract Optional<V> toOptional();
+
+    public abstract VoidResult<E> toVoidResult();
 
 }

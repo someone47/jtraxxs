@@ -37,6 +37,23 @@ final class SuccessfulValueResult<V, E> extends ValueResult<V, E> {
         return String.format("SuccessfulValueResult{value=%s}", value);
     }
 
+    @SuppressWarnings("unchecked")
+    public <W> ValueResult<W, E> castValue(Class<W> clazz) {
+        if (!clazz.isAssignableFrom(value.getClass())) {
+            throw new IllegalArgumentException(String.format(
+                    "Can not cast the value to the given type. The given type is not a superclass of the"
+                    + " type of the value. value type ='%s', given type = '%s', value = '%s'",
+                    value.getClass(), clazz, value
+            ));
+        }
+        return (ValueResult<W, E>) this;
+    }
+
+    @SuppressWarnings("unchecked")
+    public <F> ValueResult<V, F> castError(Class<F> clazz) {
+        return (ValueResult<V, F>) this;
+    }
+
     @Override
     public boolean isSuccessful() {
         return true;
@@ -137,9 +154,10 @@ final class SuccessfulValueResult<V, E> extends ValueResult<V, E> {
     }
 
     @Override
-    public <S> ValueResult<S, E> take(Supplier<ValueResult<S, E>> supplier) {
+    @SuppressWarnings("unchecked")
+    public <S> ValueResult<S, E> take(Supplier<? extends ValueResult<? extends S, ? extends E>> supplier) {
         requireNonNull(supplier, "supplier must not be null");
-        return supplier.get();
+        return (ValueResult<S, E>) supplier.get();
     }
 
     @Override
@@ -192,13 +210,18 @@ final class SuccessfulValueResult<V, E> extends ValueResult<V, E> {
     }
 
     @Override
+    public <T> T fold(Function<? super V, ? extends T> success, Function<? super E, ? extends T> failure) {
+        requireNonNull(success, "success must not be null");
+        return success.apply(value);
+    }
+
+    @Override
     public Optional<V> toOptional() {
         return Optional.ofNullable(value);
     }
 
     @Override
-    public <T> T fold(Function<? super V, ? extends T> success, Function<? super E, ? extends T> failure) {
-        requireNonNull(success, "success must not be null");
-        return success.apply(value);
+    public VoidResult<E> toVoidResult() {
+        return VoidResult.ok();
     }
 }

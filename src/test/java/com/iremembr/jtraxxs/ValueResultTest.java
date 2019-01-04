@@ -91,6 +91,28 @@ class ValueResultTest {
     }
 
     @Nested
+    @DisplayName("upCast()")
+    class upCast {
+        @Test
+        @DisplayName("WHEN given a successful ValueResult THEN upCast will return the result with adjusted types")
+        void withSuccessfulValueResult() {
+            ValueResult<String, SubMessage> success = ok("success");
+            ValueResult<CharSequence, Message> result = ValueResult.upCast(success);
+            assertThat(result).isSuccessful().withValue("success");
+            assertThat(result.value()).isExactlyInstanceOf(String.class);
+        }
+
+        @Test
+        @DisplayName("WHEN given a failed ValueResult THEN upCast will return the result with adjusted types")
+        void withFailedValueResult() {
+            ValueResult<String, SubMessage> failed = fail(new SubMessage());
+            ValueResult<CharSequence, Message> result = ValueResult.upCast(failed);
+            assertThat(result).hasFailed();
+            assertThat(result.error()).isExactlyInstanceOf(SubMessage.class);
+        }
+    }
+
+    @Nested
     @DisplayName("sequence()")
     class sequence {
         @Test

@@ -9,15 +9,41 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import static com.iremembr.jtraxxs.RailwayAssertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("A failed VoidResult")
 class FailedVoidResultTest {
+
+    @Nested
+    @DisplayName("castError()")
+    class castError {
+        @Test
+        @DisplayName("WHEN given a superclass of the error type THEN castError will return the ValueResult with the adjusted type")
+        void validCast() {
+            VoidResult<SubMessage> success = VoidResult.fail(SubMessage.INSTANCE);
+            VoidResult<Message> result = success.castError(Message.class);
+            assertThat(result).hasFailed().withError(SubMessage.INSTANCE);
+        }
+
+        @Test
+        @DisplayName("WHEN given a class which is not a superclass of the error type THEN castError will throw an IllegalArgumentException")
+        void invalidCast() {
+            VoidResult<Message> success = VoidResult.fail(Message.INSTANCE);
+            Throwable thrown = catchThrowable(() -> {
+                success.castError(BigDecimal.class);
+            });
+            Assertions.assertThat(thrown).isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("Can not cast the error to the given type");
+        }
+    }
 
     @Nested
     @DisplayName("Properties")

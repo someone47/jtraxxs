@@ -37,6 +37,23 @@ final class FailedValueResult<V, E> extends ValueResult<V, E> {
         return String.format("FailedValueResult{error=%s}", error);
     }
 
+    @SuppressWarnings("unchecked")
+    public <W> ValueResult<W, E> castValue(Class<W> clazz) {
+        return (ValueResult<W, E>) this;
+    }
+
+    @SuppressWarnings("unchecked")
+    public <F> ValueResult<V, F> castError(Class<F> clazz) {
+        if (!clazz.isAssignableFrom(error.getClass())) {
+            throw new IllegalArgumentException(String.format(
+                    "Can not cast the error to the given type. The given type is not a superclass of the"
+                            + " type of the error. error type ='%s', given type = '%s', error = '%s'",
+                    error.getClass(), clazz, error
+            ));
+        }
+        return (ValueResult<V, F>) this;
+    }
+
     @Override
     public boolean isSuccessful() {
         return false;
@@ -122,7 +139,7 @@ final class FailedValueResult<V, E> extends ValueResult<V, E> {
     }
 
     @Override
-    public <W> ValueResult<W, E> take(Supplier<ValueResult<W, E>> supplier) {
+    public <W> ValueResult<W, E> take(Supplier<? extends ValueResult<? extends W, ? extends E>> supplier) {
         return fail(error);
     }
 
@@ -173,11 +190,6 @@ final class FailedValueResult<V, E> extends ValueResult<V, E> {
     }
 
     @Override
-    public Optional<V> toOptional() {
-        return Optional.empty();
-    }
-
-    @Override
     public <T> T fold(Function<? super V, ? extends T> success, Function<? super E, ? extends T> failure) {
         requireNonNull(failure, "failure must not be null");
         return failure.apply(error);
@@ -188,5 +200,15 @@ final class FailedValueResult<V, E> extends ValueResult<V, E> {
         requireNonNull(failure, "failure must not be null");
         failure.accept(error);
         return this;
+    }
+
+    @Override
+    public Optional<V> toOptional() {
+        return Optional.empty();
+    }
+
+    @Override
+    public VoidResult<E> toVoidResult() {
+        return VoidResult.fail(error);
     }
 }

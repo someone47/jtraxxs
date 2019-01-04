@@ -27,6 +27,11 @@ final class SuccessfulVoidResult<E> extends VoidResult<E> {
         return 4711;
     }
 
+    @Override
+    @SuppressWarnings("unchecked")
+    public <F> VoidResult<F> castError(Class<F> clazz) {
+        return (VoidResult<F>) this;
+    }
 
     @Override
     public boolean isSuccessful() {

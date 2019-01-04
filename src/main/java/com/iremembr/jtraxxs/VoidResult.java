@@ -23,6 +23,13 @@ import static java.util.stream.Collectors.toList;
  */
 public abstract class VoidResult<E> extends Result<E> {
 
+    @SuppressWarnings("unchecked")
+    public static <E, F extends E> VoidResult<E> upCast(VoidResult<F> result) {
+        return (VoidResult<E>) result;
+    }
+
+    public abstract <F> VoidResult<F> castError(Class<F> clazz);
+
     /**
      * Returns a successful {@code VoidResult} with the given value.
      *

@@ -9,8 +9,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
 import java.util.function.*;
 
+import static com.iremembr.jtraxxs.RailwayAssertions.assertThat;
+import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
@@ -18,6 +21,50 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 @DisplayName("A successful ValueResult")
 class SuccessfulValueResultTest {
+
+    @Nested
+    @DisplayName("castValue()")
+    class castValue {
+        @Test
+        @DisplayName("WHEN given a superclass of the value type THEN castValue will return the ValueResult with the adjusted type")
+        void validCast() {
+            ValueResult<String, Message> success = ValueResult.ok("success");
+            ValueResult<CharSequence, Message> result = success.castValue(CharSequence.class);
+            assertThat(result).isSuccessful().withValue("success");
+            assertThat(result.value()).isExactlyInstanceOf(String.class);
+        }
+
+        @Test
+        @DisplayName("WHEN given a class which is not a superclass of the value type THEN castValue throw an IllegalArgumentException")
+        void invalidCast() {
+            ValueResult<String, Message> success = ValueResult.ok("success");
+            Throwable thrown = catchThrowable(() -> {
+                success.castValue(BigDecimal.class);
+            });
+            assertThat(thrown).isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("Can not cast the value to the given type");
+        }
+    }
+
+    @Nested
+    @DisplayName("castError()")
+    class castError {
+        @Test
+        @DisplayName("WHEN given a superclass of the error type THEN castError will return the ValueResult with the adjusted type")
+        void validCast() {
+            ValueResult<String, SubMessage> success = ValueResult.ok("success");
+            ValueResult<String, Message> result = success.castError(Message.class);
+            assertThat(result).isSuccessful().withValue("success");
+        }
+
+        @Test
+        @DisplayName("WHEN given a class which is not a superclass of the error type THEN castError  will return the ValueResult with the adjusted type")
+        void invalidCast() {
+            ValueResult<String, Message> success = ValueResult.ok("success");
+            ValueResult<String, BigDecimal> result = success.castError(BigDecimal.class);
+            assertThat(result).isSuccessful().withValue("success");
+        }
+    }
 
     @Nested
     @DisplayName("Properties")
@@ -438,6 +485,19 @@ class SuccessfulValueResultTest {
     }
 
     @Nested
+    @DisplayName("fold()")
+    class fold {
+        @Test
+        @DisplayName("Returns value mapped by the success Function")
+        void returnsSuccess(@Mock Function<String, String> success, @Mock Function<String, String> failure) {
+            when(success.apply("success")).thenReturn("mapped");
+            Assertions.assertThat(ValueResult.<String, String>ok("success").fold(success, failure)).isEqualTo("mapped");
+            verify(success, only()).apply("success");
+            verify(failure, never()).apply(anyString());
+        }
+    }
+
+    @Nested
     @DisplayName("toOptional()")
     class toOptional {
         @Test
@@ -449,15 +509,14 @@ class SuccessfulValueResultTest {
     }
 
     @Nested
-    @DisplayName("fold()")
-    class fold {
+    @DisplayName("toVoidResult()")
+    class toVoidResult {
         @Test
-        @DisplayName("Returns value mapped by the success Function")
-        void returnsSuccess(@Mock Function<String, String> success, @Mock Function<String, String> failure) {
-            when(success.apply("success")).thenReturn("mapped");
-            Assertions.assertThat(ValueResult.<String, String>ok("success").fold(success, failure)).isEqualTo("mapped");
-            verify(success, only()).apply("success");
-            verify(failure, never()).apply(anyString());
+        @DisplayName("Returns a successful VoidResult")
+        void returnsSuccessfulVoidResult() {
+            ValueResult<String, Message> success = ValueResult.ok("success");
+            VoidResult<Message> result = success.toVoidResult();
+            RailwayAssertions.assertThat(result).isSuccessful();
         }
     }
 }

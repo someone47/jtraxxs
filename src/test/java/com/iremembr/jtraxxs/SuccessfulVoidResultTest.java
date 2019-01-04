@@ -8,6 +8,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -21,6 +22,26 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 @DisplayName("A successful VoidResult")
 class SuccessfulVoidResultTest {
+
+    @Nested
+    @DisplayName("castError()")
+    class castError {
+        @Test
+        @DisplayName("WHEN given a superclass of the error type THEN castError will return the VoidResult with the adjusted type")
+        void validCast() {
+            VoidResult<SubMessage> success = VoidResult.ok();
+            VoidResult<Message> result = success.castError(Message.class);
+            assertThat(result).isSuccessful();
+        }
+
+        @Test
+        @DisplayName("WHEN given a class which is not a superclass of the error type THEN castError  will return the VoidResult with the adjusted type")
+        void invalidCast() {
+            VoidResult<Message> success = VoidResult.ok();
+            VoidResult<BigDecimal> result = success.castError(BigDecimal.class);
+            assertThat(result).isSuccessful();
+        }
+    }
 
     @Nested
     @DisplayName("Properties")
