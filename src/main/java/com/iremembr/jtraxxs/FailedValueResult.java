@@ -119,7 +119,7 @@ final class FailedValueResult<V, E> extends ValueResult<V, E> {
     }
 
     @Override
-    public ValueResult<V, E> ensure(Result<E> result) {
+    public ValueResult<V, E> ensure(Result<? extends E> result) {
         return this;
     }
 
@@ -129,12 +129,12 @@ final class FailedValueResult<V, E> extends ValueResult<V, E> {
     }
 
     @Override
-    public ValueResult<V, E> ensure(Function<V, ? extends Result<? extends E>> function) {
+    public ValueResult<V, E> ensure(Function<? super V, ? extends Result<? extends E>> function) {
         return this;
     }
 
     @Override
-    public <W> ValueResult<W, E> take(ValueResult<W, E> result) {
+    public <W> ValueResult<W, E> take(ValueResult<? extends W, ? extends E> result) {
         return fail(error);
     }
 
@@ -144,12 +144,9 @@ final class FailedValueResult<V, E> extends ValueResult<V, E> {
     }
 
     @Override
-    public <W> ValueResult<W, E> take(Function<V, ValueResult<W, E>> function) {
+    public <W> ValueResult<W, E> take(Function<? super V, ? extends ValueResult<? extends W, ? extends E>> function) {
         return fail(error);
     }
-
-    // These methods may execute a given function depending on the state of the underlying ValueResult
-    // ensure may return a different ValueResult object depending on its outcome.
 
     @Override
     public <S> ValueResult<S, E> map(Function<? super V, ? extends S> mapper) {
@@ -168,7 +165,7 @@ final class FailedValueResult<V, E> extends ValueResult<V, E> {
     }
 
     @Override
-    public <W, X> ValueResult<X, E> combine(BiFunction<V, W, X> function, ValueResult<W, E> other) {
+    public <W, X> ValueResult<X, E> combine(BiFunction<? super V, ? super W, ? extends X> function, ValueResult<? extends W, ? extends E> other) {
         return fail(this.error());
     }
 

@@ -1,6 +1,7 @@
 package com.iremembr.jtraxxs;
 
 import nl.jqno.equalsverifier.EqualsVerifier;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -14,14 +15,28 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static com.iremembr.jtraxxs.RailwayAssertions.assertThat;
-import static com.iremembr.jtraxxs.RailwayAssertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("A successful VoidResult")
 class SuccessfulVoidResultTest {
+
+    private VoidResult<Message> base;
+    private ValueResult<SubValue, SubMessage> success;
+    private ValueResult<SubValue, SubMessage> failed;
+    private VoidResult<SubMessage> ok;
+    private VoidResult<SubMessage> bad;
+
+    @BeforeEach
+    void setUp() {
+        base = VoidResult.ok();
+        success = ValueResult.ok(SubValue.INSTANCE);
+        failed = ValueResult.fail(SubMessage.INSTANCE);
+        ok = VoidResult.ok();
+        bad = VoidResult.fail(SubMessage.INSTANCE);
+    }
 
     @Nested
     @DisplayName("castError()")
@@ -49,19 +64,23 @@ class SuccessfulVoidResultTest {
         @Test
         @DisplayName("isSuccessful() returns true")
         void isSuccess() {
-            assertThat(VoidResult.ok().isSuccessful()).isTrue();
+            assertThat(base.isSuccessful()).isTrue();
         }
 
         @Test
         @DisplayName("hasFailed() returns false")
         void isFailure() {
-            assertThat(VoidResult.ok().hasFailed()).isFalse();
+            assertThat(base.hasFailed()).isFalse();
         }
 
         @Test
         @DisplayName("error() throws an IllegalStateException")
         void getError() {
-            assertThatThrownBy(() -> VoidResult.ok().error())
+            // When
+            Throwable thrown = catchThrowable(() -> base.error());
+
+            // Then
+            assertThat(thrown)
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("Successful ValueResult has no error");
         }
@@ -83,7 +102,7 @@ class SuccessfulVoidResultTest {
         @Test
         @DisplayName("Returns a proper representation")
         void toStringMethod() {
-            assertThat(VoidResult.ok().toString()).isEqualTo("SuccessfulVoidResult");
+            assertThat(base.toString()).isEqualTo("SuccessfulVoidResult");
         }
     }
 
@@ -93,7 +112,7 @@ class SuccessfulVoidResultTest {
         @Test
         @DisplayName("Returns an empty Stream")
         void errorStreamIsEmpty() {
-            assertThat(VoidResult.ok().errorStream()).isEmpty();
+            assertThat(base.errorStream()).isEmpty();
         }
     }
 
@@ -103,7 +122,7 @@ class SuccessfulVoidResultTest {
         @Test
         @DisplayName("WHEN given a Runnable THEN the Runnable will be invoked once AND the returned ValueResult is successful")
         void withRunnable(@Mock Runnable runnable) {
-            assertThat(VoidResult.ok().onSuccess(runnable)).isSuccessful();
+            assertThat(base.onSuccess(runnable)).isSuccessful();
             verify(runnable, only()).run();
         }
     }
@@ -114,14 +133,14 @@ class SuccessfulVoidResultTest {
         @Test
         @DisplayName("WHEN given a Runnable THEN the Runnable will not be invoked AND the base ValueResult will be passed through")
         void withRunnable(@Mock Runnable runnable) {
-            assertThat(VoidResult.ok().onFailure(runnable)).isSuccessful();
+            assertThat(base.onFailure(runnable)).isSuccessful();
             verify(runnable, never()).run();
         }
 
         @Test
         @DisplayName("WHEN given a Consumer THEN the Consumer will not be invoked AND the base ValueResult will be passed through")
-        void withConsumer(@Mock Consumer<String> consumer) {
-            assertThat(VoidResult.<String>ok().onFailure(consumer)).isSuccessful();
+        void withConsumer(@Mock Consumer<ParentMessage> consumer) {
+            assertThat(base.onFailure(consumer)).isSuccessful();
             verify(consumer, never()).accept(any());
         }
     }
@@ -131,10 +150,10 @@ class SuccessfulVoidResultTest {
     class onBoth {
         @Test
         @DisplayName("Calls success Runnable")
-        void returnsSuccess(@Mock Runnable success, @Mock Consumer<String> failure) {
-            assertThat(VoidResult.<String>ok().onBoth(success, failure)).isSuccessful();
+        void returnsSuccess(@Mock Runnable success, @Mock Consumer<ParentMessage> failure) {
+            assertThat(base.onBoth(success, failure)).isSuccessful();
             verify(success, only()).run();
-            verify(failure, never()).accept(anyString());
+            verify(failure, never()).accept(any(ParentMessage.class));
         }
     }
 
@@ -144,84 +163,126 @@ class SuccessfulVoidResultTest {
         @Test
         @DisplayName("WHEN given true THEN the base ValueResult will be passed through")
         void withTrue() {
-            assertThat(VoidResult.ok().ensure(true, "error")).isSuccessful();
+            VoidResult<Message> result = base.ensure(true, SubMessage.INSTANCE);
+            assertThat(result).isSuccessful();
         }
 
         @Test
         @DisplayName("WHEN given false THEN a failed ValueResult with the given error will be returned")
         void withFalse() {
-            assertThat(VoidResult.ok().ensure(false, "error")).hasFailed().withError("error");
+            VoidResult<Message> result = base.ensure(false, SubMessage.INSTANCE);
+            assertThat(result).hasFailed().withError(SubMessage.INSTANCE);
         }
 
         @Test
         @DisplayName("WHEN given a Supplier returning true THEN the base ValueResult will be passed through")
         void withSupplierReturningTrue(@Mock Supplier<Boolean> supplier) {
+            // Given
             when(supplier.get()).thenReturn(true);
-            assertThat(VoidResult.ok().ensure(supplier, "error")).isSuccessful();
+
+            // When
+            VoidResult<Message> result = base.ensure(supplier, SubMessage.INSTANCE);
+
+            // Then
+            assertThat(result).isSuccessful();
             verify(supplier, only()).get();
         }
 
         @Test
         @DisplayName("WHEN given a Supplier returning false THEN a failed ValueResult with the given error will be returned")
         void withSupplierReturningFalse(@Mock Supplier<Boolean> supplier) {
+            // Given
             when(supplier.get()).thenReturn(false);
-            assertThat(VoidResult.ok().ensure(supplier, "error")).hasFailed().withError("error");
+
+            // When
+            VoidResult<Message> result = base.ensure(supplier, SubMessage.INSTANCE);
+
+            // Then
+            assertThat(result).hasFailed().withError(SubMessage.INSTANCE);
             verify(supplier, only()).get();
         }
 
         @Test
         @DisplayName("WHEN given a successful VoidResult THEN the returned VoidResult is successful")
         void successfulVoidResult() {
-            assertThat(VoidResult.ok().ensure(VoidResult.ok())).isSuccessful();
+            VoidResult<Message> result = base.ensure(ok);
+            assertThat(result).isSuccessful();
         }
 
         @Test
         @DisplayName("WHEN given a Supplier returning a successful VoidResult THEN the returned VoidResult is successful")
-        void successfulVoidResultSupplier(@Mock Supplier<VoidResult<String>> supplier) {
-            when(supplier.get()).thenReturn(VoidResult.ok());
-            assertThat(VoidResult.ok().ensure(supplier)).isSuccessful();
+        void successfulVoidResultSupplier(@Mock Supplier<VoidResult<SubMessage>> supplier) {
+            // Given
+            when(supplier.get()).thenReturn(ok);
+
+            // When
+            VoidResult<Message> result = base.ensure(supplier);
+
+            // Then
+            assertThat(result).isSuccessful();
             verify(supplier, only()).get();
         }
 
         @Test
         @DisplayName("WHEN given a successful ValueResult THEN the returned VoidResult is successful")
         void successfulValueResult() {
-            assertThat(VoidResult.ok().ensure(ValueResult.ok("ok"))).isSuccessful();
+            VoidResult<Message> result = base.ensure(success);
+            assertThat(result).isSuccessful();
         }
 
         @Test
         @DisplayName("WHEN given a Supplier returning a successful ValueResult THEN the returned VoidResult is successful")
-        void successfulValueResultSupplier(@Mock Supplier<ValueResult<String, String>> supplier) {
-            when(supplier.get()).thenReturn(ValueResult.ok("ok"));
-            assertThat(VoidResult.ok().ensure(supplier)).isSuccessful();
+        void successfulValueResultSupplier(@Mock Supplier<ValueResult<SubValue, SubMessage>> supplier) {
+            // Given
+            when(supplier.get()).thenReturn(success);
+
+            // When
+            VoidResult<Message> result = base.ensure(supplier);
+
+            // Then
+            assertThat(result).isSuccessful();
             verify(supplier, only()).get();
         }
 
         @Test
         @DisplayName("WHEN given a failed VoidResult THEN the returned VoidResult has failed with the error of the given VoidResult")
         void failedVoidResult() {
-            assertThat(VoidResult.ok().ensure(VoidResult.fail("error"))).hasFailed().withError("error");
+            VoidResult<Message> result = base.ensure(bad);
+            assertThat(result).hasFailed().withError(SubMessage.INSTANCE);
         }
 
         @Test
         @DisplayName("WHEN given a Supplier returning a failed VoidResult THEN the returned VoidResult has failed with the error of the given VoidResult")
-        void failedVoidResultSupplier(@Mock Supplier<VoidResult<String>> supplier) {
-            when(supplier.get()).thenReturn(VoidResult.fail("error"));
-            assertThat(VoidResult.ok().ensure(supplier)).hasFailed().withError("error");
+        void failedVoidResultSupplier(@Mock Supplier<VoidResult<SubMessage>> supplier) {
+            // Given
+            when(supplier.get()).thenReturn(bad);
+
+            // When
+            VoidResult<Message> result = base.ensure(supplier);
+
+            // Then
+            assertThat(result).hasFailed().withError(SubMessage.INSTANCE);
             verify(supplier, only()).get();
         }
 
         @Test
         @DisplayName("WHEN given a failed ValueResult THEN the returned VoidResult has failed with the error of the given ValueResult")
         void failedValueResult() {
-            assertThat(VoidResult.ok().ensure(ValueResult.fail("error"))).hasFailed().withError("error");
+            VoidResult<Message> result = base.ensure(failed);
+            assertThat(result).hasFailed().withError(SubMessage.INSTANCE);
         }
 
         @Test
         @DisplayName("WHEN given a Supplier returning a failed ValueResult THEN the returned VoidResult has failed with the error of the given ValueResult")
-        void failedValueResultSupplier(@Mock Supplier<ValueResult<String, String>> supplier) {
-            when(supplier.get()).thenReturn(ValueResult.fail("error"));
-            assertThat(VoidResult.ok().ensure(supplier)).hasFailed().withError("error");
+        void failedValueResultSupplier(@Mock Supplier<ValueResult<SubValue, SubMessage>> supplier) {
+            // Given
+            when(supplier.get()).thenReturn(failed);
+
+            // When
+            VoidResult<Message> result = base.ensure(supplier);
+
+            // Then
+            assertThat(result).hasFailed().withError(SubMessage.INSTANCE);
             verify(supplier, only()).get();
         }
     }
@@ -231,8 +292,8 @@ class SuccessfulVoidResultTest {
     class mapError {
         @Test
         @DisplayName("WHEN given a Function THEN a returned ValueResult is successful")
-        void mapErrorMethod(@Mock Function<String, String> function) {
-            assertThat(VoidResult.<String>ok().mapError(function).isSuccessful()).isTrue();
+        void mapErrorMethod(@Mock Function<ParentMessage, SubMessage> function) {
+            assertThat(base.mapError(function).isSuccessful()).isTrue();
             verify(function, never()).apply(any());
         }
     }
@@ -242,11 +303,16 @@ class SuccessfulVoidResultTest {
     class fold {
         @Test
         @DisplayName("Returns the value of the success Supplier")
-        void returnsSuccess(@Mock Supplier<String> success, @Mock Function<String, String> failure) {
-            when(success.get()).thenReturn("success");
-            assertThat(VoidResult.<String>ok().fold(success, failure)).isEqualTo("success");
+        void returnsSuccess(@Mock Supplier<ParentValue> success, @Mock Function<ParentMessage, SubMessage> failure) {
+            // Given
+            when(success.get()).thenReturn(SubValue.INSTANCE);
+
+            // When
+            assertThat(base.fold(success, failure)).isEqualTo(SubValue.INSTANCE);
+
+            // Then
             verify(success, only()).get();
-            verify(failure, never()).apply(anyString());
+            verify(failure, never()).apply(any());
         }
     }
 }

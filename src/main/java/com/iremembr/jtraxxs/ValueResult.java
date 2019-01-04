@@ -185,7 +185,7 @@ public abstract class ValueResult<V, E> extends Result<E> {
      * @return A ValueResult.
      * @throws NullPointerException if the ValueResult is successful ensure result is {@code null}.
      */
-    public abstract ValueResult<V, E> ensure(Result<E> result);
+    public abstract ValueResult<V, E> ensure(Result<? extends E> result);
 
     /**
      * Returns a failed ValueResult when either the ValueResult itself or the result of the supplier are failed,
@@ -206,7 +206,7 @@ public abstract class ValueResult<V, E> extends Result<E> {
      * @throws IllegalStateException if the ValueResult is successful ensure does not have a value.
      * @throws NullPointerException  if the ValueResult is successful, has a value ensure function is {@code null}.
      */
-    public abstract ValueResult<V, E> ensure(Function<V, ? extends Result<? extends E>> function);
+    public abstract ValueResult<V, E> ensure(Function<? super V, ? extends Result<? extends E>> function);
 
     /**
      * Returns the current ValueResult when it is failed, otherwise a successful or failed
@@ -217,7 +217,7 @@ public abstract class ValueResult<V, E> extends Result<E> {
      * @return A ValueResult.
      * @throws NullPointerException if the ValueResult is successful ensure result is {@code null}.
      */
-    public abstract <W> ValueResult<W, E> take(ValueResult<W, E> result);
+    public abstract <W> ValueResult<W, E> take(ValueResult<? extends W, ? extends E> result);
 
     /**
      * Returns the current ValueResult when it is failed, otherwise a successful or failed
@@ -240,7 +240,7 @@ public abstract class ValueResult<V, E> extends Result<E> {
      * @throws IllegalStateException if the ValueResult is successful ensure does not have a value.
      * @throws NullPointerException  if the ValueResult is successful, has a value ensure function is {@code null}.
      */
-    public abstract <W> ValueResult<W, E> take(Function<V, ValueResult<W, E>> function);
+    public abstract <W> ValueResult<W, E> take(Function<? super V, ? extends ValueResult<? extends W, ? extends E>> function);
 
     /**
      * Maps the ValueResult to a ValueResult with another value, if the ValueResult is successful.
@@ -267,7 +267,7 @@ public abstract class ValueResult<V, E> extends Result<E> {
      * @throws NullPointerException  if the ValueResult is successful, has a value ensure other is {@code null}.
      * @throws NullPointerException  if the ValueResult is successful, has a value ensure function is {@code null}.
      */
-    public abstract <W, X> ValueResult<X, E> combine(BiFunction<V, W, X> function, ValueResult<W, E> other);
+    public abstract <W, X> ValueResult<X, E> combine(BiFunction<? super V, ? super W, ? extends X> function, ValueResult<? extends W, ? extends E> other);
 
     /**
      * Maps the ValueResult to a ValueResult with another error, if the ValueResult is failed.

@@ -83,7 +83,7 @@ final class SuccessfulVoidResult<E> extends VoidResult<E> {
     }
 
     @Override
-    public VoidResult<E> ensure(Result<E> result) {
+    public VoidResult<E> ensure(Result<? extends E> result) {
         requireNonNull(result, "result must not be null");
         return result.hasFailed() ? fail(result.error()) : this;
     }

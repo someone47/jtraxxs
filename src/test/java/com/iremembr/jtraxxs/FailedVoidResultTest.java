@@ -1,7 +1,7 @@
 package com.iremembr.jtraxxs;
 
 import nl.jqno.equalsverifier.EqualsVerifier;
-import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -22,6 +22,21 @@ import static org.mockito.Mockito.*;
 @DisplayName("A failed VoidResult")
 class FailedVoidResultTest {
 
+    private VoidResult<Message> base;
+    private ValueResult<SubValue, SubMessage> success;
+    private ValueResult<SubValue, SubMessage> failed;
+    private VoidResult<SubMessage> ok;
+    private VoidResult<SubMessage> bad;
+
+    @BeforeEach
+    void setUp() {
+        base = VoidResult.fail(Message.INSTANCE);
+        success = ValueResult.ok(SubValue.INSTANCE);
+        failed = ValueResult.fail(SubMessage.INSTANCE);
+        ok = VoidResult.ok();
+        bad = VoidResult.fail(SubMessage.INSTANCE);
+    }
+
     @Nested
     @DisplayName("castError()")
     class castError {
@@ -36,11 +51,9 @@ class FailedVoidResultTest {
         @Test
         @DisplayName("WHEN given a class which is not a superclass of the error type THEN castError will throw an IllegalArgumentException")
         void invalidCast() {
-            VoidResult<Message> success = VoidResult.fail(Message.INSTANCE);
-            Throwable thrown = catchThrowable(() -> {
-                success.castError(BigDecimal.class);
-            });
-            Assertions.assertThat(thrown).isInstanceOf(IllegalArgumentException.class)
+            Throwable thrown = catchThrowable(() -> base.castError(BigDecimal.class));
+            assertThat(thrown)
+                    .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("Can not cast the error to the given type");
         }
     }
@@ -51,19 +64,19 @@ class FailedVoidResultTest {
         @Test
         @DisplayName("isSuccessful() returns false")
         void isSuccess() {
-            Assertions.assertThat(VoidResult.fail("error").isSuccessful()).isFalse();
+            assertThat(base.isSuccessful()).isFalse();
         }
 
         @Test
         @DisplayName("hasFailed() returns true")
         void isFailure() {
-            Assertions.assertThat(VoidResult.fail("error").hasFailed()).isTrue();
+            assertThat(base.hasFailed()).isTrue();
         }
 
         @Test
         @DisplayName("error() returns the error")
         void getError() {
-            Assertions.assertThat(VoidResult.fail("error").error()).isEqualTo("error");
+            assertThat(base.error()).isEqualTo(Message.INSTANCE);
         }
     }
 
@@ -83,7 +96,7 @@ class FailedVoidResultTest {
         @Test
         @DisplayName("Returns a proper representation")
         void toStringMethod() {
-            Assertions.assertThat(VoidResult.fail("error").toString()).isEqualTo("FailedVoidResult{error=error}");
+            assertThat(base.toString()).isEqualTo("FailedVoidResult{error=Message}");
         }
     }
 
@@ -93,7 +106,7 @@ class FailedVoidResultTest {
         @Test
         @DisplayName("Returns an Stream with the error")
         void successfulVoidResult() {
-            Assertions.assertThat(VoidResult.fail("error").errorStream()).containsExactly("error");
+            assertThat(base.errorStream()).containsExactly(Message.INSTANCE);
         }
     }
 
@@ -103,7 +116,7 @@ class FailedVoidResultTest {
         @Test
         @DisplayName("WHEN given a Runnable THEN the Runnable will not be invoked AND the base ValueResult will be passed through")
         void withRunnable(@Mock Runnable runnable) {
-            RailwayAssertions.assertThat(VoidResult.fail("error").onSuccess(runnable)).hasFailed().withError("error");
+            assertThat(base.onSuccess(runnable)).hasFailed().withError(Message.INSTANCE);
             verify(runnable, never()).run();
         }
     }
@@ -114,15 +127,15 @@ class FailedVoidResultTest {
         @Test
         @DisplayName("WHEN given a Runnable THEN the Runnable will be invoked once AND the base ValueResult will be passed through")
         void withRunnable(@Mock Runnable runnable) {
-            RailwayAssertions.assertThat(VoidResult.fail("error").onFailure(runnable)).hasFailed().withError("error");
+            assertThat(base.onFailure(runnable)).hasFailed().withError(Message.INSTANCE);
             verify(runnable, only()).run();
         }
 
         @Test
         @DisplayName("WHEN given a Consumer THEN the Consumer will be invoked once AND the base ValueResult will be passed through")
-        void withConsumer(@Mock Consumer<String> consumer) {
-            RailwayAssertions.assertThat(VoidResult.fail("error").onFailure(consumer)).hasFailed().withError("error");
-            verify(consumer, only()).accept("error");
+        void withConsumer(@Mock Consumer<ParentMessage> consumer) {
+            assertThat(base.onFailure(consumer)).hasFailed().withError(Message.INSTANCE);
+            verify(consumer, only()).accept(Message.INSTANCE);
         }
     }
 
@@ -131,10 +144,10 @@ class FailedVoidResultTest {
     class onBoth {
         @Test
         @DisplayName("Calls failure Consumer")
-        void callsFailureConsumer(@Mock Runnable success, @Mock Consumer<String> failure) {
-            RailwayAssertions.assertThat(VoidResult.fail("error").onBoth(success, failure)).hasFailed().withError("error");
+        void callsFailureConsumer(@Mock Runnable success, @Mock Consumer<ParentMessage> failure) {
+            assertThat(base.onBoth(success, failure)).hasFailed().withError(Message.INSTANCE);
             verify(success, never()).run();
-            verify(failure, only()).accept("error");
+            verify(failure, only()).accept(Message.INSTANCE);
         }
     }
 
@@ -144,56 +157,56 @@ class FailedVoidResultTest {
         @Test
         @DisplayName("WHEN given true THEN the VoidResult will be passed through")
         void withTrue() {
-            RailwayAssertions.assertThat(VoidResult.fail("error").ensure(true, "error")).hasFailed().withError("error");
+            assertThat(base.ensure(true, SubMessage.INSTANCE)).hasFailed().withError(Message.INSTANCE);
         }
 
         @Test
         @DisplayName("WHEN given false THEN the VoidResult will be passed through")
         void withFalse() {
-            RailwayAssertions.assertThat(VoidResult.fail("error").ensure(false, "error")).hasFailed().withError("error");
+            assertThat(base.ensure(false, SubMessage.INSTANCE)).hasFailed().withError(Message.INSTANCE);
         }
 
         @Test
         @DisplayName("WHEN given a Supplier THEN the Supplier will not be invoked AND the VoidResult will be passed through")
         void withSupplier(@Mock Supplier<Boolean> supplier) {
-            RailwayAssertions.assertThat(VoidResult.fail("error").ensure(supplier, "error")).hasFailed().withError("error");
+            assertThat(base.ensure(supplier, SubMessage.INSTANCE)).hasFailed().withError(Message.INSTANCE);
             verify(supplier, never()).get();
         }
 
         @Test
         @DisplayName("WHEN given a successful VoidResult THEN the returned VoidResult has failed with the error of base Result")
         void successfulVoidResult() {
-            RailwayAssertions.assertThat(VoidResult.fail("error").ensure(VoidResult.ok())).hasFailed().withError("error");
+            assertThat(base.ensure(ok)).hasFailed().withError(Message.INSTANCE);
         }
 
         @Test
         @DisplayName("WHEN given a successful ValueResult THEN the returned VoidResult has failed with the error of base Result")
         void successfulValueResult() {
-            RailwayAssertions.assertThat(VoidResult.fail("error").ensure(ValueResult.ok("ok"))).hasFailed().withError("error");
+            assertThat(base.ensure(success)).hasFailed().withError(Message.INSTANCE);
         }
 
         @Test
         @DisplayName("WHEN given a failed VoidResult THEN the returned VoidResult has failed with the error of the base Result")
         void failedVoidResult() {
-            RailwayAssertions.assertThat(VoidResult.fail("error").ensure(VoidResult.fail("bad"))).hasFailed().withError("error");
+            assertThat(base.ensure(bad)).hasFailed().withError(Message.INSTANCE);
         }
 
         @Test
         @DisplayName("WHEN given a failed ValueResult THEN the returned VoidResult has failed with the error of the base Result")
         void failedValueResult() {
-            RailwayAssertions.assertThat(VoidResult.fail("error").ensure(ValueResult.fail("bad"))).hasFailed().withError("error");
+            assertThat(base.ensure(failed)).hasFailed().withError(Message.INSTANCE);
         }
 
         @Test
         @DisplayName("WHEN given a supplier THEN the returned VoidResult has failed with the error of base Result")
-        void voidResultSupplier(@Mock Supplier<VoidResult<String>> supplier) {
-            RailwayAssertions.assertThat(VoidResult.fail("error").ensure(supplier)).hasFailed().withError("error");
+        void voidResultSupplier(@Mock Supplier<VoidResult<SubMessage>> supplier) {
+            assertThat(base.ensure(supplier)).hasFailed().withError(Message.INSTANCE);
         }
 
         @Test
         @DisplayName("WHEN given a supplier THEN the supplier is not invoked")
-        void voidResultSupplierNeverCalled(@Mock Supplier<VoidResult<String>> supplier) {
-            VoidResult.fail("error").ensure(supplier);
+        void voidResultSupplierNeverCalled(@Mock Supplier<VoidResult<SubMessage>> supplier) {
+            base.ensure(supplier);
             verify(supplier, never()).get();
         }
     }
@@ -203,10 +216,10 @@ class FailedVoidResultTest {
     class mapError {
         @Test
         @DisplayName("WHEN given a Function THEN the Function will be invoked AND its return value will be the error of the returned failed VoidResult")
-        void withFunction(@Mock Function<String, String> function) {
-            when(function.apply("error")).thenReturn("failedResult");
-            RailwayAssertions.assertThat(VoidResult.fail("error").mapError(function)).hasFailed().withError("failedResult");
-            verify(function, only()).apply("error");
+        void withFunction(@Mock Function<ParentMessage, SubMessage> function) {
+            when(function.apply(Message.INSTANCE)).thenReturn(SubMessage.INSTANCE);
+            assertThat(base.mapError(function)).hasFailed().withError(SubMessage.INSTANCE);
+            verify(function, only()).apply(Message.INSTANCE);
         }
     }
 
@@ -215,12 +228,11 @@ class FailedVoidResultTest {
     class fold {
         @Test
         @DisplayName("Returns the value of the failure Function")
-        void returnsFailureFunction(@Mock Supplier<String> success, @Mock Function<String, String> failure) {
-            when(failure.apply("error")).thenReturn("mapped");
-            Assertions.assertThat(VoidResult.fail("error").fold(success, failure)).isEqualTo("mapped");
+        void returnsFailureFunction(@Mock Supplier<String> success, @Mock Function<ParentMessage, SubMessage> failure) {
+            when(failure.apply(Message.INSTANCE)).thenReturn(SubMessage.INSTANCE);
+            assertThat(base.fold(success, failure)).isEqualTo(SubMessage.INSTANCE);
             verify(success, never()).get();
-            verify(failure, only()).apply("error");
-
+            verify(failure, only()).apply(Message.INSTANCE);
         }
     }
 }

@@ -77,7 +77,7 @@ public abstract class VoidResult<E> extends Result<E> {
      * @return A VoidResult.
      * @throws NullPointerException if the VoidResult is successful ensure result is {@code null}.
      */
-    public abstract VoidResult<E> ensure(Result<E> result);
+    public abstract VoidResult<E> ensure(Result<? extends E> result);
 
     /**
      * Returns a failed VoidResult when either the VoidResult itself or the result of the supplier are failed,

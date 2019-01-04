@@ -128,7 +128,7 @@ final class SuccessfulValueResult<V, E> extends ValueResult<V, E> {
     }
 
     @Override
-    public ValueResult<V, E> ensure(Result<E> result) {
+    public ValueResult<V, E> ensure(Result<? extends E> result) {
         requireNonNull(result, "result must not be null");
         return result.hasFailed() ? fail(result.error()) : this;
     }
@@ -141,16 +141,17 @@ final class SuccessfulValueResult<V, E> extends ValueResult<V, E> {
     }
 
     @Override
-    public ValueResult<V, E> ensure(Function<V, ? extends Result<? extends E>> function) {
+    public ValueResult<V, E> ensure(Function<? super V, ? extends Result<? extends E>> function) {
         requireNonNull(function, "function must not be null");
         Result<? extends E> result = function.apply(value);
         return result.hasFailed() ? fail(result.error()) : this;
     }
 
     @Override
-    public <S> ValueResult<S, E> take(ValueResult<S, E> other) {
+    @SuppressWarnings("unchecked")
+    public <S> ValueResult<S, E> take(ValueResult<? extends S, ? extends E> other) {
         requireNonNull(other, "other must not be null");
-        return other;
+        return (ValueResult<S, E>) other;
     }
 
     @Override
@@ -161,9 +162,10 @@ final class SuccessfulValueResult<V, E> extends ValueResult<V, E> {
     }
 
     @Override
-    public <S> ValueResult<S, E> take(Function<V, ValueResult<S, E>> function) {
+    @SuppressWarnings("unchecked")
+    public <S> ValueResult<S, E> take(Function<? super V, ? extends ValueResult<? extends S, ? extends E>> function) {
         requireNonNull(function, "function must not be null");
-        return function.apply(value());
+        return (ValueResult<S, E>) function.apply(value());
     }
 
     @Override
@@ -186,7 +188,7 @@ final class SuccessfulValueResult<V, E> extends ValueResult<V, E> {
     }
 
     @Override
-    public <W, X> ValueResult<X, E> combine(BiFunction<V, W, X> function, ValueResult<W, E> other) {
+    public <W, X> ValueResult<X, E> combine(BiFunction<? super V, ? super W, ? extends X> function, ValueResult<? extends W, ? extends E> other) {
         requireNonNull(function, "function must not be null");
         requireNonNull(other, "other must not be null");
         return other.isSuccessful()

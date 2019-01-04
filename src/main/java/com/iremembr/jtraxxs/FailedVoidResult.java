@@ -103,7 +103,7 @@ final class FailedVoidResult<E> extends VoidResult<E> {
     }
 
     @Override
-    public VoidResult<E> ensure(Result<E> result) {
+    public VoidResult<E> ensure(Result<? extends E> result) {
         return this;
     }
 
